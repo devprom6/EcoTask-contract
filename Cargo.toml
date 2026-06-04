@@ -1,0 +1,9 @@
+[workspace]
+members = ["contracts/eco-token", "contracts/task-registry", "contracts/reward-engine"]
+resolver = "2"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+lto = true
+codegen-units = 1
