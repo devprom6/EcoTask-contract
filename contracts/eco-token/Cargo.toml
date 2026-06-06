@@ -8,4 +8,5 @@ crate-type = ["cdylib"]
 doctest = false
 
 [dependencies]
-soroban-sdk = "20.0.0"
+soroban-sdk = { version = "26.0.1", features = ["testutils"] }
+
