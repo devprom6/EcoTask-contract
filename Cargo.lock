@@ -1922,7 +1922,7 @@ dependencies = [
 name = "task-registry"
 version = "0.1.0"
 dependencies = [
- "soroban-sdk 21.7.7",
+ "soroban-sdk 26.0.1",
 ]
 
 [[package]]
