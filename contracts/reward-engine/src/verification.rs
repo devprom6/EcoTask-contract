@@ -134,7 +134,7 @@ impl RewardEngine {
             vec![
                 &e,
                 e.current_contract_address().into_val(&e),
-                (task_id as u64).into_val(&e),
+                task_id.into_val(&e),
                 user.clone().into_val(&e),
             ],
         );
