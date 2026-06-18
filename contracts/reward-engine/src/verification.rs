@@ -221,7 +221,7 @@ mod test {
     use soroban_sdk::{Address, Env, String};
 
     fn deploy_token(e: &Env, admin: &Address) -> Address {
-        let token_id = e.register(None, eco_token::TokenContract);
+        let token_id = e.register(eco_token::TokenContract, ());
         let token_client = eco_token::TokenContractClient::new(e, &token_id);
         token_client.initialize(
             admin,
@@ -233,7 +233,7 @@ mod test {
     }
 
     fn deploy_registry(e: &Env, admin: &Address) -> Address {
-        let reg_id = e.register(None, task_registry::RegistryContract);
+        let reg_id = e.register(task_registry::RegistryContract, ());
         let reg_client = task_registry::RegistryContractClient::new(e, &reg_id);
         reg_client.initialize(admin);
         reg_id
@@ -255,7 +255,7 @@ mod test {
         let token_id = deploy_token(&e, &admin);
         let reg_id = deploy_registry(&e, &admin);
 
-        let engine_id = e.register(None, RewardEngine);
+        let engine_id = e.register(RewardEngine, ());
         let engine_client = RewardEngineClient::new(&e, &engine_id);
 
         e.mock_all_auths_allowing_non_root_auth();
@@ -316,7 +316,7 @@ mod test {
         let token = Address::generate(&e);
         let registry = Address::generate(&e);
 
-        let engine_id = e.register(None, RewardEngine);
+        let engine_id = e.register(RewardEngine, ());
         let engine_client = RewardEngineClient::new(&e, &engine_id);
 
         engine_client.initialize(&admin, &token, &registry, &admin);
@@ -371,7 +371,7 @@ mod test {
         let token_id = deploy_token(&e, &admin);
         let reg_id = deploy_registry(&e, &admin);
 
-        let engine_id = e.register(None, RewardEngine);
+        let engine_id = e.register(RewardEngine, ());
         let engine_client = RewardEngineClient::new(&e, &engine_id);
 
         let reg_client = task_registry::RegistryContractClient::new(&e, &reg_id);

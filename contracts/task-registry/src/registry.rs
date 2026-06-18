@@ -176,7 +176,7 @@ mod test {
     fn setup() -> (Env, Address, RegistryContractClient<'static>) {
         let e = Env::default();
         let admin = Address::generate(&e);
-        let contract_id = e.register(None, RegistryContract);
+        let contract_id = e.register(RegistryContract, ());
         let client = RegistryContractClient::new(&e, &contract_id);
 
         client.initialize(&admin);
@@ -203,7 +203,7 @@ mod test {
 
     #[test]
     fn test_create_and_get_task() {
-        let (e, _admin, client) = setup();
+        let (e, admin, client) = setup();
         e.mock_all_auths();
 
         let task_type = String::from_str(&e, "tree-planting");

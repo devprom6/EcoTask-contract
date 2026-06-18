@@ -137,7 +137,7 @@ mod test {
     fn test_initialize_and_metadata() {
         let e = Env::default();
         let admin = Address::generate(&e);
-        let contract_id = e.register(None, TokenContract);
+        let contract_id = e.register(TokenContract, ());
         let client = TokenContractClient::new(&e, &contract_id);
 
         client.initialize(
@@ -158,7 +158,7 @@ mod test {
         let e = Env::default();
         let admin = Address::generate(&e);
         let user = Address::generate(&e);
-        let contract_id = e.register(None, TokenContract);
+        let contract_id = e.register(TokenContract, ());
         let client = TokenContractClient::new(&e, &contract_id);
 
         client.initialize(
@@ -181,7 +181,7 @@ mod test {
         let admin = Address::generate(&e);
         let from = Address::generate(&e);
         let to = Address::generate(&e);
-        let contract_id = e.register(None, TokenContract);
+        let contract_id = e.register(TokenContract, ());
         let client = TokenContractClient::new(&e, &contract_id);
 
         client.initialize(
@@ -205,7 +205,7 @@ mod test {
         let e = Env::default();
         let admin = Address::generate(&e);
         let user = Address::generate(&e);
-        let contract_id = e.register(None, TokenContract);
+        let contract_id = e.register(TokenContract, ());
         let client = TokenContractClient::new(&e, &contract_id);
 
         client.initialize(
@@ -226,7 +226,7 @@ mod test {
         let admin = Address::generate(&e);
         let from = Address::generate(&e);
         let to = Address::generate(&e);
-        let contract_id = e.register(None, TokenContract);
+        let contract_id = e.register(TokenContract, ());
         let client = TokenContractClient::new(&e, &contract_id);
 
         client.initialize(
@@ -246,7 +246,7 @@ mod test {
         let e = Env::default();
         let admin = Address::generate(&e);
         let user = Address::generate(&e);
-        let contract_id = e.register(None, TokenContract);
+        let contract_id = e.register(TokenContract, ());
         let client = TokenContractClient::new(&e, &contract_id);
 
         client.initialize(
@@ -264,7 +264,7 @@ mod test {
     fn test_double_initialize_fails() {
         let e = Env::default();
         let admin = Address::generate(&e);
-        let contract_id = e.register(None, TokenContract);
+        let contract_id = e.register(TokenContract, ());
         let client = TokenContractClient::new(&e, &contract_id);
 
         client.initialize(
