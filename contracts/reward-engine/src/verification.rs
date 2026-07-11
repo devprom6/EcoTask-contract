@@ -70,6 +70,21 @@ impl RewardEngine {
         storage::write_oracle(&e, &new_oracle);
     }
 
+    pub fn set_reward_range(e: Env, caller: Address, min_reward: i128, max_reward: i128) {
+        caller.require_auth();
+        let admin = storage::read_admin(&e);
+        if caller != admin {
+            panic!("unauthorized");
+        }
+        if min_reward <= 0 {
+            panic!("min reward must be positive");
+        }
+        if max_reward < min_reward {
+            panic!("max reward must be >= min reward");
+        }
+        storage::write_reward_range(&e, min_reward, max_reward);
+    }
+
     pub fn submit_proof(e: Env, oracle: Address, user: Address, task_id: u64, proof_cid: String) {
         oracle.require_auth();
         let stored_oracle = storage::read_oracle(&e);
@@ -122,6 +137,20 @@ impl RewardEngine {
 
         if verification.status != VerificationStatus::Pending {
             panic!("verification is not pending");
+        }
+
+        if reward_amount <= 0 {
+            panic!("reward amount must be positive");
+        }
+        if let Some(min) = storage::read_min_reward(&e) {
+            if reward_amount < min {
+                panic!("reward below minimum");
+            }
+        }
+        if let Some(max) = storage::read_max_reward(&e) {
+            if reward_amount > max {
+                panic!("reward exceeds maximum");
+            }
         }
 
         verification.status = VerificationStatus::Approved;
@@ -394,5 +423,57 @@ mod test {
         assert_eq!(token_client.balance(&user), 1000);
 
         assert!(reg_client.is_task_completed(&task_id, &user));
+    }
+
+    #[test]
+    fn test_reward_range_enforced() {
+        let (e, admin, oracle, user, task_id, client) = setup();
+        e.mock_all_auths_allowing_non_root_auth();
+
+        // Set allowed range: 500 – 2000
+        client.set_reward_range(&admin, &500, &2000);
+
+        let proof_cid = String::from_str(&e, "QmRangeOk");
+        client.submit_proof(&oracle, &user, &task_id, &proof_cid);
+        // 1000 is within range — should succeed
+        client.approve_proof(&oracle, &user, &task_id, &1000);
+
+        let v = client.get_verification(&task_id, &user);
+        assert_eq!(v.reward_amount, 1000);
+    }
+
+    #[test]
+    #[should_panic(expected = "reward below minimum")]
+    fn test_reward_below_minimum() {
+        let (e, admin, oracle, user, task_id, client) = setup();
+        e.mock_all_auths_allowing_non_root_auth();
+
+        client.set_reward_range(&admin, &500, &2000);
+
+        let proof_cid = String::from_str(&e, "QmTooLow");
+        client.submit_proof(&oracle, &user, &task_id, &proof_cid);
+        client.approve_proof(&oracle, &user, &task_id, &100);
+    }
+
+    #[test]
+    #[should_panic(expected = "reward exceeds maximum")]
+    fn test_reward_above_maximum() {
+        let (e, admin, oracle, user, task_id, client) = setup();
+        e.mock_all_auths_allowing_non_root_auth();
+
+        client.set_reward_range(&admin, &500, &2000);
+
+        let proof_cid = String::from_str(&e, "QmTooHigh");
+        client.submit_proof(&oracle, &user, &task_id, &proof_cid);
+        client.approve_proof(&oracle, &user, &task_id, &9999);
+    }
+
+    #[test]
+    #[should_panic(expected = "max reward must be >= min reward")]
+    fn test_set_invalid_reward_range() {
+        let (e, admin, _oracle, _user, _task_id, client) = setup();
+        e.mock_all_auths_allowing_non_root_auth();
+
+        client.set_reward_range(&admin, &2000, &500);
     }
 }

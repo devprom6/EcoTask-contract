@@ -30,6 +30,8 @@ pub enum DataKey {
     Registry,
     Oracle,
     Verification(u64, Address),
+    MinReward,
+    MaxReward,
 }
 
 pub fn write_admin(e: &Env, admin: &Address) {
@@ -85,4 +87,17 @@ pub fn write_verification(e: &Env, task_id: u64, user: &Address, v: &Verificatio
 pub fn read_verification(e: &Env, task_id: u64, user: &Address) -> Option<Verification> {
     let key = DataKey::Verification(task_id, user.clone());
     e.storage().persistent().get(&key)
+}
+
+pub fn write_reward_range(e: &Env, min: i128, max: i128) {
+    e.storage().instance().set(&DataKey::MinReward, &min);
+    e.storage().instance().set(&DataKey::MaxReward, &max);
+}
+
+pub fn read_min_reward(e: &Env) -> Option<i128> {
+    e.storage().instance().get(&DataKey::MinReward)
+}
+
+pub fn read_max_reward(e: &Env) -> Option<i128> {
+    e.storage().instance().get(&DataKey::MaxReward)
 }
