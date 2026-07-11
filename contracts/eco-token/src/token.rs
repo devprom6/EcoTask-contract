@@ -126,6 +126,18 @@ impl TokenContract {
         storage::read_admin(&e)
     }
 
+    pub fn transfer_admin(e: Env, current_admin: Address, new_admin: Address) {
+        current_admin.require_auth();
+        let stored_admin = storage::read_admin(&e);
+        if current_admin != stored_admin {
+            panic!("unauthorized");
+        }
+        if new_admin == current_admin {
+            panic!("new admin must be different");
+        }
+        storage::write_admin(&e, &new_admin);
+    }
+
     pub fn burn(e: Env, from: Address, amount: i128) {
         from.require_auth();
 
@@ -311,8 +323,68 @@ mod test {
     }
 
     #[test]
-    fn test_burn() {
+    fn test_transfer_admin() {
         let e = Env::default();
+        let admin = Address::generate(&e);
+        let new_admin = Address::generate(&e);
+        let contract_id = e.register(TokenContract, ());
+        let client = TokenContractClient::new(&e, &contract_id);
+
+        client.initialize(
+            &admin,
+            &String::from_str(&e, "ECO"),
+            &String::from_str(&e, "ECO"),
+            &7,
+        );
+
+        e.mock_all_auths();
+        client.transfer_admin(&admin, &new_admin);
+
+        assert_eq!(client.admin(), new_admin);
+    }
+
+    #[test]
+    #[should_panic(expected = "unauthorized")]
+    fn test_transfer_admin_unauthorized() {
+        let e = Env::default();
+        let admin = Address::generate(&e);
+        let attacker = Address::generate(&e);
+        let new_admin = Address::generate(&e);
+        let contract_id = e.register(TokenContract, ());
+        let client = TokenContractClient::new(&e, &contract_id);
+
+        client.initialize(
+            &admin,
+            &String::from_str(&e, "ECO"),
+            &String::from_str(&e, "ECO"),
+            &7,
+        );
+
+        e.mock_all_auths();
+        client.transfer_admin(&attacker, &new_admin);
+    }
+
+    #[test]
+    #[should_panic(expected = "new admin must be different")]
+    fn test_transfer_admin_same_address() {
+        let e = Env::default();
+        let admin = Address::generate(&e);
+        let contract_id = e.register(TokenContract, ());
+        let client = TokenContractClient::new(&e, &contract_id);
+
+        client.initialize(
+            &admin,
+            &String::from_str(&e, "ECO"),
+            &String::from_str(&e, "ECO"),
+            &7,
+        );
+
+        e.mock_all_auths();
+        client.transfer_admin(&admin, &admin);
+    }
+
+    #[test]
+    fn test_burn() {        let e = Env::default();
         let admin = Address::generate(&e);
         let user = Address::generate(&e);
         let contract_id = e.register(TokenContract, ());
