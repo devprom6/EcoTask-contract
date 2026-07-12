@@ -249,12 +249,7 @@ impl TokenContract {
             to_balance.checked_add(amount).expect("balance overflow"),
         );
 
-        TransferEvent {
-            from,
-            to,
-            amount,
-        }
-        .publish(&e);
+        TransferEvent { from, to, amount }.publish(&e);
     }
 }
 
