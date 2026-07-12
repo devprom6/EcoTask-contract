@@ -26,6 +26,14 @@ pub struct TaskExpiredEvent {
 
 #[contractevent]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TaskCancelledEvent {
+    #[topic]
+    pub creator: Address,
+    pub task_id: u64,
+}
+
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SponsorAddedEvent {
     #[topic]
     pub sponsor: Address,
@@ -165,6 +173,31 @@ impl RegistryContract {
 
         task.status = TaskStatus::Expired;
         storage::write_task(&e, &task);
+    }
+
+    pub fn cancel_task(e: Env, caller: Address, task_id: u64) {
+        caller.require_auth();
+
+        let mut task = match storage::read_task(&e, task_id) {
+            Some(task) => task,
+            None => panic!("task not found"),
+        };
+
+        if task.creator != caller {
+            panic!("unauthorized");
+        }
+        if task.status != TaskStatus::Active {
+            panic!("task is not active");
+        }
+
+        task.status = TaskStatus::Expired;
+        storage::write_task(&e, &task);
+
+        TaskCancelledEvent {
+            creator: task.creator,
+            task_id,
+        }
+        .publish(&e);
     }
 
     pub fn task_count(e: Env) -> u64 {
@@ -461,6 +494,62 @@ mod test {
 
         e.ledger().set_timestamp(3000);
         client.complete_task(&admin, &task_id, &user);
+    }
+
+    #[test]
+    fn test_cancel_task_by_creator() {
+        let (e, admin, client) = setup();
+        e.mock_all_auths();
+
+        let task_id = create_test_task(
+            &client,
+            &admin,
+            &String::from_str(&e, "tree-planting"),
+            1,
+            1000,
+        );
+
+        client.cancel_task(&admin, &task_id);
+
+        let task = client.get_task(&task_id);
+        assert_eq!(task.status, TaskStatus::Expired);
+    }
+
+    #[test]
+    #[should_panic(expected = "unauthorized")]
+    fn test_cancel_task_not_creator() {
+        let (e, admin, client) = setup();
+        e.mock_all_auths();
+
+        let task_id = create_test_task(
+            &client,
+            &admin,
+            &String::from_str(&e, "tree-planting"),
+            1,
+            1000,
+        );
+
+        let other = Address::generate(&e);
+        client.cancel_task(&other, &task_id);
+    }
+
+    #[test]
+    #[should_panic(expected = "task is not active")]
+    fn test_cancel_already_completed_task() {
+        let (e, admin, client) = setup();
+        e.mock_all_auths();
+
+        let user = Address::generate(&e);
+        let task_id = create_test_task(
+            &client,
+            &admin,
+            &String::from_str(&e, "tree-planting"),
+            1,
+            1000,
+        );
+
+        client.complete_task(&admin, &task_id, &user);
+        client.cancel_task(&admin, &task_id);
     }
 
     #[test]
